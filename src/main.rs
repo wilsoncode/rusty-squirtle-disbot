@@ -28,6 +28,8 @@ impl EventHandler for Handler {
   async fn message(&self, ctx: Context, msg: Message) {
     match ctx.http.get_current_application_info().await {
       Ok(info) => {
+        println!("info: {:?}", info);
+        println!("msg: {:?}", msg);
         if msg.content == "!ping" {
           // Sending a message can fail, due to a network error, an
           // authentication error, or lack of permissions to post in the
@@ -36,7 +38,7 @@ impl EventHandler for Handler {
           if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
             println!("Error sending message: {:?}", why);
           }
-        } else if msg.mentions.contains(&info.owner) {
+        } else if msg.mentions_user_id(info.id) {
           if let Err(why) = msg.channel_id.say(&ctx.http, "Hello").await {
             println!("Error sending message: {:?}", why);
           }
