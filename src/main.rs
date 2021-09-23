@@ -38,6 +38,28 @@ async fn get_selfie() -> Result<String, Box<dyn std::error::Error>> {
   Ok(resp.data.choose(&mut rand::thread_rng()).unwrap().images.original.url.to_owned())
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct MoveDetails {
+  name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Move {
+  r#move: MoveDetails,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PokeAPIResponse {
+  moves: Vec<Move>,
+}
+
+async fn get_moves() -> Result<String, Box<dyn std::error::Error>> {
+  let resp = reqwest::get(
+    "https://pokeapi.co/api/v2/pokemon/squirtle"
+  ).await?.json::<PokeAPIResponse>().await?;
+  Ok(resp.moves.choose(&mut rand::thread_rng()).unwrap().r#move.name.to_owned())
+}
+
 #[async_trait]
 impl EventHandler for Handler {
   // Set a handler to be called on the `ready` event. This is called when a
@@ -79,6 +101,13 @@ impl EventHandler for Handler {
               });
               m
             }).await {
+              println!("Error sending message: {:?}", why);
+            }
+          } else if msg.content.contains("attack") {
+            let attack_move = get_moves().await.unwrap();
+            if let Err(why) = msg.channel_id.say(&ctx.http, format!(
+              "Squirtle use {}. It's super effective.", attack_move
+            )).await {
               println!("Error sending message: {:?}", why);
             }
           } else {
