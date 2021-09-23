@@ -1,3 +1,4 @@
+use rand::seq::SliceRandom;
 use std::env;
 
 use serenity::{
@@ -39,7 +40,12 @@ impl EventHandler for Handler {
             println!("Error sending message: {:?}", why);
           }
         } else if msg.mentions_user_id(info.id) {
-          if let Err(why) = msg.channel_id.say(&ctx.http, "Hello").await {
+          let cries = vec!["Squirtle!", "Squirtle squirtle squirtle", "SQUIRTLE SQUIRTLE!"];
+          let response = match cries.choose(&mut rand::thread_rng()) {
+            Some(cry) => cry,
+            None => "zzz...",
+          };
+          if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
             println!("Error sending message: {:?}", why);
           }
         }
