@@ -40,6 +40,18 @@ impl EventHandler for Handler {
             println!("Error sending message: {:?}", why);
           }
         } else if msg.mentions_user_id(info.id) {
+          if msg.content.contains("selfie") {
+            if let Err(why) = msg.channel_id.send_message(&ctx.http, |m| {
+              m.content("Squirtle!");
+              m.embed(|e| {
+                e.image("https://wallpaperaccess.com/full/415596.jpg");
+                e
+              });
+              m
+            }).await {
+              println!("Error sending message: {:?}", why);
+            }
+          }
           let cries = vec!["Squirtle!", "Squirtle squirtle squirtle", "SQUIRTLE SQUIRTLE!"];
           let response = match cries.choose(&mut rand::thread_rng()) {
             Some(cry) => cry,
