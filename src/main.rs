@@ -1,4 +1,5 @@
 use rand::seq::SliceRandom;
+use serde::{Serialize, Deserialize};
 use std::env;
 
 use serenity::{
@@ -8,6 +9,34 @@ use serenity::{
 };
 
 struct Handler;
+
+#[derive(Serialize, Deserialize, Debug)]
+struct GiphyOriginalImage {
+  url: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct GiphyImages {
+  original: GiphyOriginalImage,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct GiphyData {
+  images: GiphyImages,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct GiphyResponse {
+  data: Vec<GiphyData>,
+}
+
+async fn get_selfie() -> Result<String, Box<dyn std::error::Error>> {
+  let giphy_token = env::var("GIPHY_TOKEN").expect("Expected a giphy token in the environment");
+  let resp = reqwest::get(
+    format!("https://api.giphy.com/v1/gifs/search?api_key={}&q=squirtle&rating=g&lang=en", giphy_token)
+  ).await?.json::<GiphyResponse>().await?;
+  Ok(resp.data.choose(&mut rand::thread_rng()).unwrap().images.original.url.to_owned())
+}
 
 #[async_trait]
 impl EventHandler for Handler {
@@ -29,8 +58,6 @@ impl EventHandler for Handler {
   async fn message(&self, ctx: Context, msg: Message) {
     match ctx.http.get_current_application_info().await {
       Ok(info) => {
-        println!("info: {:?}", info);
-        println!("msg: {:?}", msg);
         if msg.content == "!ping" {
           // Sending a message can fail, due to a network error, an
           // authentication error, or lack of permissions to post in the
@@ -40,25 +67,24 @@ impl EventHandler for Handler {
             println!("Error sending message: {:?}", why);
           }
         } else if msg.mentions_user_id(info.id) {
-          if msg.content.contains("selfie") {
+          let cries = vec!["Squirtle!", "Squirtle squirtle squirtle", "SQUIRTLE SQUIRTLE!"];
+          let cry = cries.choose(&mut rand::thread_rng()).unwrap();
+          if msg.content.contains("take a selfie") {
+            let selfie = get_selfie().await.unwrap();
             if let Err(why) = msg.channel_id.send_message(&ctx.http, |m| {
-              m.content("Squirtle!");
+              m.content(&cry);
               m.embed(|e| {
-                e.image("https://wallpaperaccess.com/full/415596.jpg");
+                e.image(&selfie);
                 e
               });
               m
             }).await {
               println!("Error sending message: {:?}", why);
             }
-          }
-          let cries = vec!["Squirtle!", "Squirtle squirtle squirtle", "SQUIRTLE SQUIRTLE!"];
-          let response = match cries.choose(&mut rand::thread_rng()) {
-            Some(cry) => cry,
-            None => "zzz...",
-          };
-          if let Err(why) = msg.channel_id.say(&ctx.http, response).await {
-            println!("Error sending message: {:?}", why);
+          } else {
+            if let Err(why) = msg.channel_id.say(&ctx.http, &cry).await {
+              println!("Error sending message: {:?}", why);
+            }
           }
         }
       },
