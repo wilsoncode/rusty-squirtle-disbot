@@ -1,13 +1,13 @@
 [package]
-name = "discord-squirtle-bot"
+name = "rusty-squirtle-disbot"
 version = "0.1.0"
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rand = "0.8.0"
 reqwest = { version = "0.11", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1.12.0", features = ["macros", "rt-multi-thread"] }
 serenity = { default-features = false, features = ["client", "gateway", "model", "rustls_backend"], version = "0.10"}
-rand = "0.8.0"
+tokio = { version = "1.12.0", features = ["macros", "rt-multi-thread"] }
